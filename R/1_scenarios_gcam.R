@@ -108,14 +108,25 @@ basic_graph_eu <- function(data, var = graph_labels_eu$VARIABLE) {
           dplyr::select("LABELS","VARIABLE","WEIGHT","SOURCE","Scenario","Impact","LABELS_ORDERED"="CountryName")
 
         pl <- ggplot2::ggplot(datapl,
-                              ggplot2::aes(x = tidytext::reorder_within(LABELS_ORDERED, Impact, Scenario),
-                                           y = Impact, fill = Scenario)) +
+                              ggplot2::aes(y = tidytext::reorder_within(LABELS_ORDERED, Impact, Scenario),
+                                           x = Impact, fill = Scenario)) +
           ggplot2::geom_col(position = ggplot2::position_dodge(width = 1)) +
-          ggplot2::facet_wrap(~Scenario, scales = "free_x") +
-          tidytext::scale_x_reordered() +
+          ggplot2::facet_wrap(~Scenario, scales = "free_y", ncol = 1) + 
+          tidytext::scale_y_reordered() +
           # Destacar EU con color diferente si es país
           ggplot2::geom_col(data = datapl %>% filter(LABELS == "EU"),
                             fill = "darkblue", position = position_dodge(width = 1))
+        
+        # MODIFICACIÓN 2: Crear gráfico con ordenamiento independiente por facet
+        pl <- pl +
+          ggplot2::scale_fill_manual(values = c("#3ed8d8", "#7ee5b2", "#e5e57e", "#e5b27e", "#e57f7e", "#e78ae7", "#b98ae7")) +
+          ggplot2::scale_x_continuous(labels = scales::label_percent(scale = 1)) +
+          ggplot2::labs(x = "Change in welfare (%)", y = clean_g) +
+          ggplot2::theme_classic(base_size = 12) +
+          ggplot2::theme(axis.text = ggplot2::element_text(size = 11),
+                         strip.text = ggplot2::element_text(size = 12),
+                         axis.title = ggplot2::element_text(size = 12))
+        
 
       } else {
         pl <- ggplot2::ggplot(datapl,
@@ -123,18 +134,17 @@ basic_graph_eu <- function(data, var = graph_labels_eu$VARIABLE) {
                                            y = Impact, fill = Scenario)) +
           ggplot2::geom_col(position = ggplot2::position_dodge(width = 1)) +
           ggplot2::facet_wrap(~Scenario, scales = "free_x")
+
+        # MODIFICACIÓN 2: Crear gráfico con ordenamiento independiente por facet
+        pl <- pl +
+          ggplot2::scale_fill_manual(values = c("#3ed8d8", "#7ee5b2", "#e5e57e", "#e5b27e", "#e57f7e", "#e78ae7", "#b98ae7")) +
+          ggplot2::scale_y_continuous(labels = scales::label_percent(scale = 1)) +
+          ggplot2::labs(y = "Change in welfare (%)", x = clean_g) +
+          ggplot2::theme_classic(base_size = 12) +
+          ggplot2::theme(axis.text = ggplot2::element_text(size = 11),
+                         strip.text = ggplot2::element_text(size = 12),
+                         axis.title = ggplot2::element_text(size = 12))
       }
-
-
-      # MODIFICACIÓN 2: Crear gráfico con ordenamiento independiente por facet
-      pl <- pl +
-        ggplot2::scale_fill_manual(values = c("#3ed8d8", "#7ee5b2", "#e5e57e", "#e5b27e", "#e57f7e", "#e78ae7", "#b98ae7")) +
-        ggplot2::scale_y_continuous(labels = scales::label_percent(scale = 1)) +
-        ggplot2::labs(y = "Change in welfare (%)", x = clean_g) +
-        ggplot2::theme_classic(base_size = 12) +
-        ggplot2::theme(axis.text = ggplot2::element_text(size = 11),
-                       strip.text = ggplot2::element_text(size = 12),
-                       axis.title = ggplot2::element_text(size = 12))
 
 
       if (g %in% c("decile", "decile_eu")) {
@@ -153,7 +163,7 @@ basic_graph_eu <- function(data, var = graph_labels_eu$VARIABLE) {
         pl <- pl + ggplot2::scale_x_continuous(breaks = seq(0, 100, by = 10))
       }
 
-      if (g %in% c("country", "zone", "household_type", "children", "income_source", "COUNTRYRP", "activity", "education")) {
+      if (g %in% c("zone", "household_type", "children", "income_source", "COUNTRYRP", "activity", "education")) {
         pl <- pl + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1, vjust = 0.25))
       }
 
@@ -162,6 +172,9 @@ basic_graph_eu <- function(data, var = graph_labels_eu$VARIABLE) {
       # Aumenta anchura si g == "country"
       if (g == "country") {
         adj_wh$width <- adj_wh$width + 60
+        adj_wh$tmp <- adj_wh$width
+        adj_wh$width <- adj_wh$heigth
+        adj_wh$heigth <- adj_wh$tmp
       }
 
       ggplot2::ggsave(pl,
@@ -528,8 +541,8 @@ fig_ms_map <- function(data) {
       labels = function(x) paste0(x, "%")
     ) +
     ggplot2::theme_minimal() +
-    ggplot2::xlim(-10,40) + ggplot2::ylim(34,70) +
-    ggplot2::facet_wrap(~Scenario) +
+    ggplot2::xlim(-10,40) + ggplot2::ylim(37,70) +
+    ggplot2::facet_wrap(~Scenario, ncol = 1) +
     ggplot2::theme_classic() +
     ggplot2::theme(text = ggplot2::element_text(size = 16),
                    axis.text = ggplot2::element_blank(),
@@ -542,8 +555,8 @@ fig_ms_map <- function(data) {
 
   # function to scale from old_min-old_max to new_min-new_max a given x
   scaled_x <- function(x, old_min = min(data$Impact), old_max = max(data$Impact),
-                       new_min = -0.2, new_max = 0.5) {
-    ((new_max - new_min) * (x - old_min) / (old_max - old_min) + new_min)/1.25
+                       new_min = -0.15, new_max = 0.45) {
+    ((new_max - new_min) * (x - old_min) / (old_max - old_min) + new_min)/1.1
   }
 
   blank_p <- patchwork::plot_spacer() + theme_void()
@@ -551,8 +564,8 @@ fig_ms_map <- function(data) {
   bar_plot <- cowplot::get_legend(pl_maps +
                                     ggplot2::theme(legend.text = ggplot2::element_text(size = 12),
                                                    legend.title = element_text(size = 13, margin = margin(b = 25))) +
-                                    guides(fill = guide_colourbar(barwidth = grid::unit(15, "cm"),
-                                                                  barheight = grid::unit(1, "cm"),
+                                    guides(fill = guide_colourbar(barwidth = grid::unit(7, "cm"),
+                                                                  barheight = grid::unit(0.5, "cm"),
                                                                   direction = 'horizontal',
                                                                   reverse = T)))
   # function to create bullet - segment - label
@@ -583,19 +596,19 @@ fig_ms_map <- function(data) {
     draw_plot(bar_plot, x = 0.1, y = 0.1, width = 0.8, height = 0.3) +
     # EU_FF55_free
     draw_plot(lab_tag('EU_FF55_free'),
-              x = 0.18 - scaled_x(data_eu %>%
+              x = 0.2525 - scaled_x(data_eu %>%
                                     dplyr::filter(Scenario == 'EU_FF55_free') %>%
                                     dplyr::pull(Impact)),
               y = 0.205, width = 1, height = 3) +
     # EU_FF55
     draw_plot(lab_tag('EU_FF55', reverse = T),
-              x = 0.18 - scaled_x(data_eu %>%
+              x = 0.24 - scaled_x(data_eu %>%
                                     dplyr::filter(Scenario == 'EU_FF55') %>%
                                     dplyr::pull(Impact)),
               y = -0.35, width = 1, height = 5) +
     # EU_NECP
     draw_plot(lab_tag('  EU_NECP'),
-              x = 0.18 - scaled_x(data_eu %>%
+              x = 0.24 - scaled_x(data_eu %>%
                                     dplyr::filter(Scenario == 'EU_NECP') %>%
                                     dplyr::pull(Impact)),
               y = 0.27, width = 1, height = 1.5)
@@ -609,9 +622,9 @@ fig_ms_map <- function(data) {
                 x = 0, y = 0, height = 1),
     ggdraw() +
       draw_plot(pl_line,
-                x = 0, y = 0.25, height = 1, width = 1),
+                x = 0, y = 0.2, height = 1, width = 1),
     ncol = 1,
-    rel_heights = c(1, 0.3)
+    rel_heights = c(1, 0.1)
   ) + theme(
     plot.background = element_rect(fill = "white", color = NA)
   )

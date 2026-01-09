@@ -103,11 +103,12 @@ rename_sce <- function(df){
 # figure 3 - MS
 fig_v_welfare_ms <- basic_graph_eu(d_impacts, var = 'country') +
   theme(legend.position = 'bottom')
+  
 
 ggplot2::ggsave(fig_v_welfare_ms,
                 file = file.path(folder_paper, "final_plot_MS_bar.png"),
-                width = 330,
-                height = 150,
+                width = 150,
+                height = 330,
                 units = "mm")
 
 # maps
@@ -115,21 +116,21 @@ fig_v_welfare_ms_map <- fig_ms_map(datapl_ctry)
 
 ggplot2::ggsave(fig_v_welfare_ms_map,
                 file = file.path(folder_paper, "final_plot_MS_map.png"),
-                width = 330,
-                height = 150,
+                width = 150,
+                height = 330,
                 units = "mm")
 
 
 # join
-final_plot_ms <- cowplot::plot_grid(
-  # figure
+
+fig_v_welfare_ms_map_cropped <- fig_v_welfare_ms_map + 
+  theme(plot.margin = margin(t = 0, r = -6, b = 0, l = -8, unit = "cm"))
+
+final_plot_ms <- 
   cowplot::plot_grid(fig_v_welfare_ms,
-                     fig_v_welfare_ms_map,
-                     ncol = 1, rel_heights = c(1, 1),
-                     labels = c("a)", "b)")),
-  # options
-  ncol = 1,
-  rel_heights = c(1, 1)
+                     fig_v_welfare_ms_map_cropped,
+                     ncol = 2, rel_widths = c(1.5, 1),
+                     labels = c("a)", "b)")
 ) +
   theme(
     plot.background = element_rect(fill = "white", color = NA),
