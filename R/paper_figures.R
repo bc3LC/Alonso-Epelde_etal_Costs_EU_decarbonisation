@@ -400,11 +400,17 @@ ggplot2::ggsave(final_plot_nointersectional,
 # figure intersectional
 fig_h_gender_quintile <- intersectional_graph_eu(is_d_impacts,
                                                  pairs = data.frame(category_a = 'quintile',category_b = 'gender'))
+  
 fig_h_zone_quintile <- intersectional_graph_eu(is_d_impacts,
                                                pairs = data.frame(category_a = 'quintile',category_b = 'zone'))
-legend <- cowplot::get_legend(fig_h_gender_quintile +
+legend1 <- cowplot::get_legend(fig_h_zone_quintile +
                                 ggplot2::theme(legend.direction = "horizontal",
                                                legend.text = ggplot2::element_text(size = 12)))
+legend2 <- cowplot::get_legend(fig_h_gender_quintile +
+                                ggplot2::guides(fill = 'none') +
+                                ggplot2::theme(legend.direction = "horizontal",
+                                               legend.text = ggplot2::element_text(size = 12)))
+blank_p <- patchwork::plot_spacer() + theme_void()
 
 
 final_plot_intersectional <- cowplot::plot_grid(
@@ -416,7 +422,9 @@ final_plot_intersectional <- cowplot::plot_grid(
                      ncol = 1, rel_heights = c(1, 1),
                      labels = c("a)", "b)")),
   # legend
-  legend,
+  cowplot::plot_grid(blank_p,legend1,
+                     legend2,blank_p,
+                     ncol = 4, rel_widths = c(.85, 1.5, 1, 0.85)),
   # options
   ncol = 1,
   rel_heights = c(1, 0.05)

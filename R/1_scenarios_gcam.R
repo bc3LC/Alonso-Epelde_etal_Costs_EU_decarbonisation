@@ -397,7 +397,15 @@ intersectional_graph_eu <- function(data, pairs = is_categories_eu) {
         facet_formula <- as.formula("LABELS_B ~ Scenario")
       }
 
-      if (var_a %in% c("decile", "decile_eu", "quintile", "quintile_eu", "ventile", "ventile_eu", "percentile", "percentile_eu")) {
+      if (var_a %in% c("decile", "decile_eu", "quintile", "quintile_eu", "ventile", "ventile_eu", "percentile", "percentile_eu") & var_b != 'gender') {
+        pl <- ggplot2::ggplot(datapl, ggplot2::aes(x = LABELS_A, y = Impact, fill = Scenario)) +
+          ggplot2::geom_col(position = ggplot2::position_dodge(width = 1)) +
+          ggplot2::facet_grid(facet_formula) +
+          ggplot2::scale_y_continuous(labels = scales::label_percent(scale = 1)) +
+          ggplot2::scale_fill_manual(values = c("#3ed8d8", "#7ee5b2", "#e5e57e", "#e5b27e", "#e57f7e", "#e78ae7", "#b98ae7")) +
+          ggplot2::labs(y = "Change in welfare (%)", x = clean_a) +
+          ggplot2::theme_classic(base_size = 12)
+      } else if (!(var_a == 'quintile' & var_b == 'gender')) {
         pl <- ggplot2::ggplot(datapl, ggplot2::aes(x = LABELS_A, y = Impact, fill = Scenario)) +
           ggplot2::geom_col(position = ggplot2::position_dodge(width = 1)) +
           ggplot2::facet_grid(facet_formula) +
@@ -406,13 +414,23 @@ intersectional_graph_eu <- function(data, pairs = is_categories_eu) {
           ggplot2::labs(y = "Change in welfare (%)", x = clean_a) +
           ggplot2::theme_classic(base_size = 12)
       } else {
-        pl <- ggplot2::ggplot(datapl, ggplot2::aes(x = LABELS_A, y = Impact, fill = Scenario)) +
-          ggplot2::geom_col(position = ggplot2::position_dodge(width = 1)) +
-          ggplot2::facet_grid(facet_formula) +
+        pl <- ggplot2::ggplot(datapl, ggplot2::aes(x = LABELS_A, y = Impact, 
+                                                   fill = Scenario, pattern = LABELS_B)) +
+          ggpattern::geom_col_pattern(
+            position = ggplot2::position_dodge(width = 0.9),
+            pattern_fill = "black",
+            pattern_angle = 45,
+            pattern_density = 0.1,
+            color = "black"
+          ) +
+          ggplot2::facet_grid(~Scenario) +
           ggplot2::scale_y_continuous(labels = scales::label_percent(scale = 1)) +
           ggplot2::scale_fill_manual(values = c("#3ed8d8", "#7ee5b2", "#e5e57e", "#e5b27e", "#e57f7e", "#e78ae7", "#b98ae7")) +
           ggplot2::labs(y = "Change in welfare (%)", x = clean_a) +
-          ggplot2::theme_classic(base_size = 12)
+          ggplot2::theme_classic(base_size = 12) +
+          ggplot2::theme(panel.spacing = unit(2, "lines")) +
+          ggpattern::scale_pattern_manual(values = c("circle", "crosshatch")) +
+          ggplot2::labs(pattern = 'Gender')
       }
 
       if (var_a %in% c("decile", "decile_eu")) {
