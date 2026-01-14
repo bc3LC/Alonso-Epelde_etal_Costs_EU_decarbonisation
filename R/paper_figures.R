@@ -404,12 +404,21 @@ fig_h_gender_quintile <- intersectional_graph_eu(is_d_impacts,
 fig_h_zone_quintile <- intersectional_graph_eu(is_d_impacts,
                                                pairs = data.frame(category_a = 'quintile',category_b = 'zone'))
 legend1 <- cowplot::get_legend(fig_h_zone_quintile +
+                                ggplot2::guides(pattern = 'none', fill = guide_legend(override.aes = list(pattern = "none"))) +
                                 ggplot2::theme(legend.direction = "horizontal",
                                                legend.text = ggplot2::element_text(size = 12)))
 legend2 <- cowplot::get_legend(fig_h_gender_quintile +
                                 ggplot2::guides(fill = 'none') +
                                 ggplot2::theme(legend.direction = "horizontal",
                                                legend.text = ggplot2::element_text(size = 12)))
+legend3 <- cowplot::get_legend(fig_h_zone_quintile +
+                                ggplot2::guides(fill = 'none', pattern = ggplot2::guide_legend(keywidth = unit(5, "mm"),
+                                                                                               keyheight = unit(5, "mm"),
+                                                                                               nrow = 1)) +
+                                ggplot2::theme(legend.direction = "horizontal",
+                                               legend.text = ggplot2::element_text(size = 12),
+                                               legend.key.height = unit(5, "mm"), 
+                                               legend.key.width = unit(5, "mm")))
 blank_p <- patchwork::plot_spacer() + theme_void()
 
 
@@ -422,9 +431,8 @@ final_plot_intersectional <- cowplot::plot_grid(
                      ncol = 1, rel_heights = c(1, 1),
                      labels = c("a)", "b)")),
   # legend
-  cowplot::plot_grid(blank_p,legend1,
-                     legend2,blank_p,
-                     ncol = 4, rel_widths = c(.85, 1.5, 1, 0.85)),
+  cowplot::plot_grid(legend1,legend2,legend3,
+                     ncol = 3, rel_widths = c(1, 0.75, 1)),
   # options
   ncol = 1,
   rel_heights = c(1, 0.05)

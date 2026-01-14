@@ -1,6 +1,38 @@
 # Define language
 Sys.setenv(LANG = "en")
 
+#' split_if_long
+#'
+#' Function to split string in half at the nearest space
+#' @param s target string
+#' @param ref_s maximum number of characters allowed before splitting
+#' @return target string split by half if length longer than ref_s
+split_if_long <- function(s, ref_s = 15) {
+  # Only split if longer than the reference string
+  if (nchar(s) <= ref_s) {
+    return(s)
+  }
+  
+  # Find positions of all spaces
+  spaces <- gregexpr(" ", s)[[1]]
+  
+  # If no spaces are found, return the string as is
+  if (length(spaces) == 1 && spaces[1] == -1) {
+    return(s)
+  }
+  
+  # Find the space closest to the midpoint
+  midpoint <- nchar(s) / 2
+  best_space <- spaces[which.min(abs(spaces - midpoint))]
+  
+  # Replace only that specific space with a newline
+  substr(s, best_space, best_space) <- "\n"
+  
+  return(s)
+}
+
+
+
 #' basic_graph_eu
 #'
 #' Function to create a basic graph to summarize the distributional impact in the EU
@@ -387,8 +419,8 @@ intersectional_graph_eu <- function(data, pairs = is_categories_eu) {
         dplyr::filter(!is.na(LABELS_B) & LABELS_B != "NA") %>%
         droplevels()
 
-      clean_a <- graph_labels_eu %>% dplyr::filter(VARIABLE == var_a) %>% dplyr::pull(VAR_CLEAN)
-      clean_b <- graph_labels_eu %>% dplyr::filter(VARIABLE == var_b) %>% dplyr::pull(VAR_CLEAN)
+      clean_a <- graph_labels_eu %>% dplyr::filter(VARIABLE == var_a) %>% dplyr::pull(VAR_CLEAN) %>% split_if_long()
+      clean_b <- graph_labels_eu %>% dplyr::filter(VARIABLE == var_b) %>% dplyr::pull(VAR_CLEAN) %>% split_if_long()
 
       # Determinar si se usa faceta por país
       if ("by_country" %in% names(datapl)) {
@@ -397,7 +429,7 @@ intersectional_graph_eu <- function(data, pairs = is_categories_eu) {
         facet_formula <- as.formula("LABELS_B ~ Scenario")
       }
 
-      if (var_a %in% c("decile", "decile_eu", "quintile", "quintile_eu", "ventile", "ventile_eu", "percentile", "percentile_eu") & var_b != 'gender') {
+      if (var_a %in% c("decile", "decile_eu", "quintile", "quintile_eu", "ventile", "ventile_eu", "percentile", "percentile_eu") & !var_b %in% c('gender','zone')) {
         pl <- ggplot2::ggplot(datapl, ggplot2::aes(x = LABELS_A, y = Impact, fill = Scenario)) +
           ggplot2::geom_col(position = ggplot2::position_dodge(width = 1)) +
           ggplot2::facet_grid(facet_formula) +
@@ -405,7 +437,7 @@ intersectional_graph_eu <- function(data, pairs = is_categories_eu) {
           ggplot2::scale_fill_manual(values = c("#3ed8d8", "#7ee5b2", "#e5e57e", "#e5b27e", "#e57f7e", "#e78ae7", "#b98ae7")) +
           ggplot2::labs(y = "Change in welfare (%)", x = clean_a) +
           ggplot2::theme_classic(base_size = 12)
-      } else if (!(var_a == 'quintile' & var_b == 'gender')) {
+      } else if (!(var_a == 'quintile' & var_b %in% c('gender','zone'))) {
         pl <- ggplot2::ggplot(datapl, ggplot2::aes(x = LABELS_A, y = Impact, fill = Scenario)) +
           ggplot2::geom_col(position = ggplot2::position_dodge(width = 1)) +
           ggplot2::facet_grid(facet_formula) +
@@ -421,7 +453,7 @@ intersectional_graph_eu <- function(data, pairs = is_categories_eu) {
             pattern_fill = "black",
             pattern_angle = 45,
             pattern_density = 0.1,
-            color = "black"
+            color = "black",
           ) +
           ggplot2::facet_grid(~Scenario) +
           ggplot2::scale_y_continuous(labels = scales::label_percent(scale = 1)) +
@@ -429,8 +461,8 @@ intersectional_graph_eu <- function(data, pairs = is_categories_eu) {
           ggplot2::labs(y = "Change in welfare (%)", x = clean_a) +
           ggplot2::theme_classic(base_size = 12) +
           ggplot2::theme(panel.spacing = unit(2, "lines")) +
-          ggpattern::scale_pattern_manual(values = c("circle", "crosshatch")) +
-          ggplot2::labs(pattern = 'Gender')
+          ggpattern::scale_pattern_manual(values = c("circle", "crosshatch", "none")) +
+          ggplot2::labs(pattern = clean_b)
       }
 
       if (var_a %in% c("decile", "decile_eu")) {
