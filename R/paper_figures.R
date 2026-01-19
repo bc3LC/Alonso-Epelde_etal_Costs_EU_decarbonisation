@@ -85,11 +85,11 @@ if (!dir.exists("figures/extra")) dir.create("figures/extra")
 rename_sce <- function(df){
 
   df <- df %>%
-    mutate(scenario = if_else(scenario == "EU_FF55_LTT_FREE", "EU_FF55_free", scenario),
-           scenario = if_else(scenario == "EU_FF55_LTT", "EU_FF55", scenario),
-           scenario = if_else(scenario == "EU_NECP_LTT_FREE", "EU_NECP_free", scenario),
-           scenario = if_else(scenario == "EU_NECP_LTT", "EU_NECP", scenario),
-           scenario = if_else(scenario == "EU_NOPOLICY", "EU_NOCLIMPOLICY", scenario)) %>%
+    mutate(scenario = if_else(scenario %in% c("EU_FF55_LTT_FREE","EU_FF55_free"), "EU_FF55_free", scenario),
+           scenario = if_else(scenario %in% c("EU_FF55_LTT","EU_FF55"), "EU_FF55", scenario),
+           scenario = if_else(scenario %in% c("EU_NECP_LTT_FREE","EU_NECP_free"), "EU_NECP_free", scenario),
+           scenario = if_else(scenario %in% c("EU_NECP_LTT","EU_NECP"), "EU_NECP", scenario),
+           scenario = if_else(scenario %in% c("EU_NOPOLICY","EU_NOCLIMPOLICY"), "EU_NOCLIMPOLICY", scenario)) %>%
     # Filter final scenarios:
     filter(scenario %in% c("EU_NOCLIMPOLICY", "EU_FF55_free", "EU_FF55", "EU_NECP")) %>%
     mutate(scenario = factor(scenario, levels = c('EU_FF55_free','EU_FF55','EU_NECP','EU_NOCLIMPOLICY')))
@@ -701,6 +701,15 @@ fe <- rgcam::getQuery(prj, "final energy consumption by fuel") %>%
   filter(fuel != "solar",
          fuel != "process heat dac") %>%
   mutate(region = factor(region, levels = sort(unique(region)))) %>%
+  group_by(scenario, year, region, fuel, Units) %>%
+  summarise(value = sum(value)) %>%
+  ungroup() %>% 
+  # compute diff with NoClimPolicy
+  tidyr::pivot_wider(names_from = scenario, values_from = value) %>%
+  tidyr::pivot_longer(cols = c(EU_FF55_free,EU_FF55,EU_NECP), 
+                      names_to = "scenario", 
+                      values_to = "value") %>% 
+  mutate(diff = value - EU_NOCLIMPOLICY) %>%
   rename_sce()
 
 fe_2030 <- fe %>%
@@ -709,15 +718,16 @@ fe_2030 <- fe %>%
 # Figure for EU_2030
 fe_2030_eu <- fe_2030 %>%
   group_by(scenario, year, fuel, Units) %>%
-  summarise(value = sum(value)) %>%
+  summarise(diff = sum(diff)) %>%
   ungroup()
+  
 
 
 plot_fe_2030_eu <- ggplot(fe_2030_eu, aes(x = scenario,
-                                          y = value,
-                                          fill = fuel,
-                                          alpha = scenario)) +
+                                          y = diff,
+                                          fill = fuel)) +
   geom_bar(stat = "identity", position = "stack", width = 0.7) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey40") +
   labs(
     x = "",
     y = "Final Energy Consumption (EJ)",
@@ -725,7 +735,6 @@ plot_fe_2030_eu <- ggplot(fe_2030_eu, aes(x = scenario,
   ) +
   scale_fill_manual(values = mypal[names(mypal) %in% unique(fe_2030$fuel)],
                     label = function(x) stringr::str_to_sentence(x)) +
-  scale_alpha_manual(values = c(1,1,1,0.5)) +
   theme_classic(base_size = 13) +
   theme(
     legend.direction = "horizontal",
@@ -733,8 +742,7 @@ plot_fe_2030_eu <- ggplot(fe_2030_eu, aes(x = scenario,
     axis.text = element_text(hjust = .5, size = 11),
     panel.grid.major.y = element_line(color = "grey90"),
     panel.spacing = unit(1.2, "lines")
-  ) +
-  guides(alpha = "none")
+  )
 
 ggsave(
   plot_fe_2030_eu +
@@ -747,10 +755,10 @@ ggsave(
 )
 
 pl_fe_2030 <- ggplot(fe_2030, aes(x = scenario,
-                                  y = value,
-                                  fill = fuel,
-                                  alpha = scenario)) +
+                                  y = diff,
+                                  fill = fuel)) +
   geom_bar(stat = "identity", position = "stack", width = 0.7) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey40") +
   facet_wrap(~ region, scales = "free_y") +
   labs(
     x = "",
@@ -759,7 +767,6 @@ pl_fe_2030 <- ggplot(fe_2030, aes(x = scenario,
   ) +
   scale_fill_manual(values = mypal[names(mypal) %in% unique(fe_2030$fuel)],
                     label = function(x) stringr::str_to_sentence(x)) +
-  scale_alpha_manual(values = c(1,1,1,0.5)) +
   theme_classic(base_size = 13) +
   theme(
     legend.direction = "horizontal",
@@ -768,8 +775,7 @@ pl_fe_2030 <- ggplot(fe_2030, aes(x = scenario,
     panel.grid.major.y = element_line(color = "grey90"),
     panel.spacing = unit(1.2, "lines"),
     axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, vjust = 1)
-  ) +
-  guides(alpha = "none")
+  ) 
 
 ggsave(
   pl_fe_2030 +
