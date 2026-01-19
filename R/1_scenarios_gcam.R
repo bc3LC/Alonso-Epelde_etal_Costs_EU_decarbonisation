@@ -462,7 +462,8 @@ intersectional_graph_eu <- function(data, pairs = is_categories_eu) {
           ggplot2::theme_classic(base_size = 12) +
           ggplot2::theme(panel.spacing = unit(2, "lines")) +
           ggpattern::scale_pattern_manual(values = c("circle", "crosshatch", "none")) +
-          ggplot2::labs(pattern = clean_b)
+          ggplot2::labs(pattern = clean_b) +
+          ggplot2::guides(pattern = ggplot2::guide_legend(override.aes = list(fill = "white")))
       }
 
       if (var_a %in% c("decile", "decile_eu")) {

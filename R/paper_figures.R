@@ -410,7 +410,8 @@ legend1 <- cowplot::get_legend(fig_h_zone_quintile +
 legend2 <- cowplot::get_legend(fig_h_gender_quintile +
                                 ggplot2::guides(fill = 'none') +
                                 ggplot2::theme(legend.direction = "horizontal",
-                                               legend.text = ggplot2::element_text(size = 12)))
+                                               legend.text = ggplot2::element_text(size = 12)) +
+                                 ggplot2::guides(pattern = ggplot2::guide_legend(override.aes = list(fill = "white"))))
 legend3 <- cowplot::get_legend(fig_h_zone_quintile +
                                 ggplot2::guides(fill = 'none', pattern = ggplot2::guide_legend(keywidth = unit(5, "mm"),
                                                                                                keyheight = unit(5, "mm"),
@@ -418,7 +419,8 @@ legend3 <- cowplot::get_legend(fig_h_zone_quintile +
                                 ggplot2::theme(legend.direction = "horizontal",
                                                legend.text = ggplot2::element_text(size = 12),
                                                legend.key.height = unit(5, "mm"), 
-                                               legend.key.width = unit(5, "mm")))
+                                               legend.key.width = unit(5, "mm")) +
+                                 ggplot2::guides(pattern = ggplot2::guide_legend(override.aes = list(fill = "white"))))
 blank_p <- patchwork::plot_spacer() + theme_void()
 
 
