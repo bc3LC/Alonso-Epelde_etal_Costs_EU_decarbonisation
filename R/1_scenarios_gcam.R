@@ -72,7 +72,7 @@ basic_graph_eu <- function(data, var = graph_labels_eu$VARIABLE) {
         droplevels()
 
       datapl$Scenario <- factor(datapl$Scenario,
-                                levels = c("EU_FF55_free", "EU_FF55", "EU_NECP"))
+                                levels = c("EU_FF55_FREE", "EU_FF55", "EU_NECP"))
 
       # Añadir la media de la UE si g == "country"
       if (g == "country") {
@@ -404,7 +404,7 @@ intersectional_graph_eu <- function(data, pairs = is_categories_eu) {
         )
 
       datapl$Scenario <- factor(datapl$Scenario,
-                                levels = c("EU_FF55_free", "EU_FF55", "EU_NECP"))
+                                levels = c("EU_FF55_FREE", "EU_FF55", "EU_NECP"))
 
       # Ordenar
       datapl <- order_vars_eu(datapl, var_a, "LABELS_A")
@@ -568,9 +568,9 @@ fig_ms_map <- function(data) {
                      relationship = "many-to-many")
 
   missing_ctry <- europe_data %>%
-    dplyr::filter(is.na(Scenario)) %>%
-    dplyr::select(-Scenario) %>%
-    tidyr::crossing(Scenario = unique(europe_data$Scenario[!is.na(europe_data$Scenario)]))
+    dplyr::filter(is.na(scenario)) %>%
+    dplyr::select(-scenario) %>%
+    tidyr::crossing(scenario = unique(europe_data$scenario[!is.na(europe_data$scenario)]))
   missing_ctry_sf <- sf::st_sf(missing_ctry, sf_column_name = "geometry")
   missing_ctry_sf <- sf::st_transform(missing_ctry_sf, sf::st_crs(europe_data))
   missing_ctry_sf <- missing_ctry_sf %>%
@@ -578,9 +578,10 @@ fig_ms_map <- function(data) {
 
   data_all <- rbind(
     europe_data %>%
-      dplyr::filter(!is.na(Scenario)),
+      dplyr::filter(!is.na(scenario)),
     missing_ctry_sf
-  )
+  ) %>% 
+    dplyr::filter(scenario %in% unique(data$scenario))
 
   pl_maps <- ggplot2::ggplot(data_all) +
     geom_sf(fill = "grey80") +
@@ -593,7 +594,7 @@ fig_ms_map <- function(data) {
     ) +
     ggplot2::theme_minimal() +
     ggplot2::xlim(-10,40) + ggplot2::ylim(37,70) +
-    ggplot2::facet_wrap(~Scenario, ncol = 1) +
+    ggplot2::facet_wrap(~scenario, ncol = 1) +
     ggplot2::theme_classic() +
     ggplot2::theme(text = ggplot2::element_text(size = 16),
                    axis.text = ggplot2::element_blank(),
@@ -645,22 +646,22 @@ fig_ms_map <- function(data) {
   pl_line <- ggdraw() +
     draw_plot(blank_p, x = 0, y = 0, width = 1, height = 1) +
     draw_plot(bar_plot, x = 0.1, y = 0.1, width = 0.8, height = 0.3) +
-    # EU_FF55_free
-    draw_plot(lab_tag('EU_FF55_free'),
+    # EU_FF55_FREE
+    draw_plot(lab_tag('EU_FF55_FREE'),
               x = 0.2525 - scaled_x(data_eu %>%
-                                    dplyr::filter(Scenario == 'EU_FF55_free') %>%
+                                    dplyr::filter(scenario == 'EU_FF55_FREE') %>%
                                     dplyr::pull(Impact)),
               y = 0.205, width = 1, height = 3) +
     # EU_FF55
     draw_plot(lab_tag('EU_FF55', reverse = T),
               x = 0.24 - scaled_x(data_eu %>%
-                                    dplyr::filter(Scenario == 'EU_FF55') %>%
+                                    dplyr::filter(scenario == 'EU_FF55') %>%
                                     dplyr::pull(Impact)),
               y = -0.35, width = 1, height = 5) +
     # EU_NECP
     draw_plot(lab_tag('  EU_NECP'),
               x = 0.24 - scaled_x(data_eu %>%
-                                    dplyr::filter(Scenario == 'EU_NECP') %>%
+                                    dplyr::filter(scenario == 'EU_NECP') %>%
                                     dplyr::pull(Impact)),
               y = 0.27, width = 1, height = 1.5)
 

@@ -16,6 +16,23 @@ library(rnaturalearthdata)
 
 # load functions
 source('R/1_scenarios_gcam.R')
+# rename and reorder scenarios
+rename_sce <- function(df){
+  
+  df <- df %>%
+    mutate(scenario = if_else(scenario %in% c("EU_FF55_LTT_FREE","EU_FF55_FREE","EU_FF55_free"), "EU_FF55_FREE", scenario),
+           scenario = if_else(scenario %in% c("EU_FF55_LTT","EU_FF55"), "EU_FF55", scenario),
+           scenario = if_else(scenario %in% c("EU_NECP_LTT_FREE","EU_NECP_FREE"), "EU_NECP_FREE", scenario),
+           scenario = if_else(scenario %in% c("EU_NECP_LTT","EU_NECP"), "EU_NECP", scenario),
+           scenario = if_else(scenario %in% c("EU_NOPOLICY","EU_NOCLIMPOLICY"), "EU_NOCLIMPOLICY", scenario)) %>%
+    # Filter final scenarios:
+    filter(scenario %in% c("EU_NOCLIMPOLICY", "EU_FF55_FREE", "EU_FF55", "EU_NECP")) %>%
+    mutate(scenario = factor(scenario, levels = c('EU_FF55_FREE','EU_FF55','EU_NECP','EU_NOCLIMPOLICY')))
+  
+  invisible(df)
+  
+}
+
 
 
 # load data
@@ -33,7 +50,8 @@ is_d_impacts$di_quintile_zone = is_d_impacts$di_quintile_zone %>%
                                                        dplyr::if_else(LABELS_B == 'Sparsely populated','Sparsely\npopulated',
                                                                       LABELS_B))))
 
-datapl_ctry <- get(load('data/datapl_ctry.RData')) # datapl obtained from running basic_graph_eu(d_impacts, var = 'country')
+datapl_ctry <- get(load('data/datapl_ctry_wEU.RData')) %>% # datapl obtained from running basic_graph_eu(d_impacts, var = 'country')
+  rename_sce()
 graph_labels_eu <- read.csv(file = 'data/graph_labels_eu.csv')
 c_structure_eu <- xlsx::read.xlsx("data/c_structure_eu.xlsx", sheetIndex = 1) %>%
   tidyr::pivot_longer(cols = -EU_DECILE,
@@ -52,14 +70,14 @@ c_structure_national <- xlsx::read.xlsx("data/c_structure_national.xlsx", sheetI
   dplyr::mutate(coicop = str_replace_all(coicop, "\\.", " "),
                  share = share *100)
 
-prj <- rgcam::loadProject("data/study11_fin.dat")
+prj <- rgcam::loadProject("data/prj_npjFin.dat")
 mypal = c(jgcricolors::jgcricol()$pal_all,"district heat"="goldenrod3")
 
 pal_scen <- c(
-  "EU_FF55_free" = "#3ed8d8",
+  "EU_FF55_FREE" = "#3ed8d8",
   "EU_FF55" = "#7ee5b2",
 
-  "EU_NECP_free" = "#ff7f00",
+  "EU_NECP_FREE" = "#ff7f00",
   "EU_NECP" = "#e5e57e",
 
   "EU_NOCLIMPOLICY"  = "#984ea3"
@@ -80,23 +98,6 @@ if (!dir.exists("figures")) dir.create("figures")
 if (!dir.exists("figures/paper")) dir.create("figures/paper")
 if (!dir.exists("figures/extra")) dir.create("figures/extra")
 
-
-# rename and reorder scenarios
-rename_sce <- function(df){
-
-  df <- df %>%
-    mutate(scenario = if_else(scenario %in% c("EU_FF55_LTT_FREE","EU_FF55_free"), "EU_FF55_free", scenario),
-           scenario = if_else(scenario %in% c("EU_FF55_LTT","EU_FF55"), "EU_FF55", scenario),
-           scenario = if_else(scenario %in% c("EU_NECP_LTT_FREE","EU_NECP_free"), "EU_NECP_free", scenario),
-           scenario = if_else(scenario %in% c("EU_NECP_LTT","EU_NECP"), "EU_NECP", scenario),
-           scenario = if_else(scenario %in% c("EU_NOPOLICY","EU_NOCLIMPOLICY"), "EU_NOCLIMPOLICY", scenario)) %>%
-    # Filter final scenarios:
-    filter(scenario %in% c("EU_NOCLIMPOLICY", "EU_FF55_free", "EU_FF55", "EU_NECP")) %>%
-    mutate(scenario = factor(scenario, levels = c('EU_FF55_free','EU_FF55','EU_NECP','EU_NOCLIMPOLICY')))
-
-  invisible(df)
-
-}
 
 
 ########################
@@ -215,7 +216,7 @@ ctry_data <- do.call(rbind, lapply(files, read_decile)) %>%
   # clean dataset
   dplyr::select("LABELS","VARIABLE","WEIGHT","Scenario","Impact","CountryName") %>%
   # order names
-  dplyr::mutate(Scenario = factor(Scenario, levels = c("EU_FF55_free", "EU_FF55", "EU_NECP")),
+  dplyr::mutate(Scenario = factor(Scenario, levels = c("EU_FF55_FREE", "EU_FF55", "EU_NECP")),
                 CountryName = factor(CountryName, levels = sort(unique(CountryName))),
                 LABELS = factor(LABELS, levels = 1:10),
                 LABELS = as.numeric(LABELS))
@@ -578,7 +579,7 @@ prices <- read.csv("data/price_changes_fig.csv") %>%
   replace_na(list(price_diff = 0)) %>%
   mutate(region_sector = paste(region, sector, sep = " - ")) %>%
   distinct() %>%
-  # Filter some regions/sectors fo visulization
+  # Filter some regions/sectors for visualization
   filter(
     region %in% c("Germany", "France", "Spain", "Italy", "Greece", "Romania"),
     sector %in% c("elect_td_bld", "refined liquids transport", "delivered gas")
@@ -616,10 +617,10 @@ ggsave(
   filename = file.path(folder_paper, "final_plot_price_changes_2030.tiff"),
   plot = last_plot(),
   device = "tiff",
-  width = 12,       # adjust as needed
-  height = 8,       # adjust as needed
+  width = 12, 
+  height = 8,
   units = "in",
-  dpi = 100         # high resolution for print
+  dpi = 100
 )
 
 
@@ -696,7 +697,7 @@ fe <- rgcam::getQuery(prj, "final energy consumption by fuel") %>%
     input = if_else(grepl("biomass", input), "biomass", input),
     input = if_else(grepl("gas", input), "gas", input),
     input = if_else(grepl("coal", input), "coal", input),
-  )  %>%
+  ) %>%
   rename(fuel = input) %>%
   filter(fuel != "solar",
          fuel != "process heat dac") %>%
@@ -706,7 +707,7 @@ fe <- rgcam::getQuery(prj, "final energy consumption by fuel") %>%
   ungroup() %>% 
   # compute diff with NoClimPolicy
   tidyr::pivot_wider(names_from = scenario, values_from = value) %>%
-  tidyr::pivot_longer(cols = c(EU_FF55_free,EU_FF55,EU_NECP), 
+  tidyr::pivot_longer(cols = c(EU_FF55_FREE,EU_FF55,EU_NECP), 
                       names_to = "scenario", 
                       values_to = "value") %>% 
   mutate(diff = value - EU_NOCLIMPOLICY) %>%
