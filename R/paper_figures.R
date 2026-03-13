@@ -362,7 +362,9 @@ ggplot2::ggsave(final_plot_v,
 
 ########################
 # figure no-intersectional
-fig_h_welfare_gender <- basic_graph_eu(d_impacts, var = 'gender')
+fig_h_welfare_gender <- basic_graph_eu(d_impacts, var = 'gender') +
+  scale_x_discrete(labels = c("Man" = "Man-headed household", 
+                              "Woman" = "Woman-headed household"))
 fig_h_welfare_zone <- basic_graph_eu(d_impacts, var = 'zone') +
   theme(axis.text.x = element_text(angle = 0, hjust = .5))
 legend <- cowplot::get_legend(fig_h_welfare_gender +
